@@ -38,13 +38,12 @@ This works well for 1 user or for apps with infrequent overlapping usage.
 
 However, you could get into a situation with multiple users where you have two sessions:
 
-|  time|  guid A|  no guid|
-|--:|--:|--:|
-|  1|  Arrive|  |
-|  2|  set guid|  |
-|  3| log arrival|  |
-|  4|  |  Arrive|
-|  5|  |  clear guid|
-|  6|  |  log arrival|
-|  7| log SQL |  |
-|  8|  | log SQL  |
+|  time|  guid ABC|  no guid| log|
+|--:|--:|--:|--:|
+|  1|  Arrive|  | |
+|  2|  set guid|  | |
+|  3| log arrival|  | `ABC INFO [2020-05-03 11:43:38] Server function / page loaded` |
+|  4|  |  Arrive| |
+|  5|  |  clear guid| |
+|  6|  |  log arrival| ` WARN [2020-05-03 11:43:36] No guid` |
+|  7| log SQL |  |  `INFO [2020-05-03 11:43:39] about to run query SELECT 1 as one`|
