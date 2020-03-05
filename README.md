@@ -2,6 +2,7 @@
 # To reproduce:
 
 + `shiny::runApp("app.R")`
++ Click the `Toggle URL Query Params` button 3 times. 
 
 # Console output:
 
