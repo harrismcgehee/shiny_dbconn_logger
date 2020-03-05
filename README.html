@@ -369,30 +369,87 @@ summary {
 <h1>To reproduce:</h1>
 <ul>
 <li><code>shiny::runApp(&quot;app.R&quot;)</code></li>
+<li>Click the <code>Toggle URL Query Params</code> button 3 times.</li>
 </ul>
 </div>
 <div id="console-output" class="section level1">
 <h1>Console output:</h1>
 <p>Attempting to log the <code>guid</code> query parameter from <code>dbconn::log_query</code> via the <code>layout_glue_my</code> when it is available.</p>
-<p>However, in the console log we get this:</p>
+<p>In the console log we get this:</p>
 <pre><code>runApp()
-INFO app starting
-INFO Connecting to DB
-INFO Connected to DB
+INFO [2020-05-03 11:43:34] app starting
+INFO [2020-05-03 11:43:34] Connecting to DB
+INFO [2020-05-03 11:43:34] Connected to DB
 
-Listening on http://127.0.0.1:3368
- WARN No guid
-40f98383f34366568c79919cb19019abb04e7cd4 INFO Server function / page loaded
-INFO about to run query SELECT 1 as one
-INFO Ran query SELECT 1 as one with 1 rows returned
- WARN No guid
-5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO Server function / page loaded
-INFO about to run query SELECT 1 as one
-INFO Ran query SELECT 1 as one with 1 rows returned
-
-INFO Doing application cleanup
-INFO Closing connection to </code></pre>
-<p>Notice <code>INFO about to run query SELECT 1 as one</code> does not have the <code>guid</code></p>
+Listening on http://127.0.0.1:6376
+ WARN [2020-05-03 11:43:36] No guid
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] Server function / page loaded
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] about to run query SELECT 1 as one
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] Ran query SELECT 1 as one with 1 rows returned
+ WARN [2020-05-03 11:43:39] No guid
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] Server function / page loaded
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] about to run query SELECT 1 as one
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] Ran query SELECT 1 as one with 1 rows returned
+ 
+INFO [2020-05-03 11:43:48] Doing application cleanup
+INFO [2020-05-03 11:43:48] Closing connection to </code></pre>
+<p>Notice <code>INFO about to run query SELECT 1 as one</code> <strong>does</strong> have the <code>guid</code>.</p>
+</div>
+<div id="shortcoming" class="section level1">
+<h1>Shortcoming:</h1>
+<p>This works well for 1 user or for apps with infrequent overlapping usage.</p>
+<p>However, you could get into a situation with multiple users where you have two sessions:</p>
+<table>
+<thead>
+<tr class="header">
+<th align="right">time</th>
+<th align="right">guid A</th>
+<th align="right">no guid</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">Arrive</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">set guid</td>
+<td align="right"></td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">log arrival</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right"></td>
+<td align="right">Arrive</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right"></td>
+<td align="right">clear guid</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right"></td>
+<td align="right">log arrival</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="right">log SQL</td>
+<td align="right"></td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="right"></td>
+<td align="right">log SQL</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 

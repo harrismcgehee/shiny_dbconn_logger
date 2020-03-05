@@ -8,26 +8,43 @@
 
 Attempting to log the `guid` query parameter from `dbconn::log_query` via the `layout_glue_my` when it is available.
 
-However, in the console log we get this:
+In the console log we get this:
 
 ```
 runApp()
-INFO app starting
-INFO Connecting to DB
-INFO Connected to DB
+INFO [2020-05-03 11:43:34] app starting
+INFO [2020-05-03 11:43:34] Connecting to DB
+INFO [2020-05-03 11:43:34] Connected to DB
 
-Listening on http://127.0.0.1:3368
- WARN No guid
-40f98383f34366568c79919cb19019abb04e7cd4 INFO Server function / page loaded
-INFO about to run query SELECT 1 as one
-INFO Ran query SELECT 1 as one with 1 rows returned
- WARN No guid
-5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO Server function / page loaded
-INFO about to run query SELECT 1 as one
-INFO Ran query SELECT 1 as one with 1 rows returned
-
-INFO Doing application cleanup
-INFO Closing connection to 
+Listening on http://127.0.0.1:6376
+ WARN [2020-05-03 11:43:36] No guid
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] Server function / page loaded
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] about to run query SELECT 1 as one
+40f98383f34366568c79919cb19019abb04e7cd4 INFO [2020-05-03 11:43:38] Ran query SELECT 1 as one with 1 rows returned
+ WARN [2020-05-03 11:43:39] No guid
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] Server function / page loaded
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] about to run query SELECT 1 as one
+5f5ab64ce0e412b5aa7ecdc813d4e7b158384600 INFO [2020-05-03 11:43:39] Ran query SELECT 1 as one with 1 rows returned
+ 
+INFO [2020-05-03 11:43:48] Doing application cleanup
+INFO [2020-05-03 11:43:48] Closing connection to 
 ```
 
-Notice `INFO about to run query SELECT 1 as one` does not have the `guid`
+Notice `INFO about to run query SELECT 1 as one` **does** have the `guid`.
+
+# Shortcoming:
+
+This works well for 1 user or for apps with infrequent overlapping usage.
+
+However, you could get into a situation with multiple users where you have two sessions:
+
+|  time|  guid A|  no guid|
+|--:|--:|--:|
+|  1|  Arrive|  |
+|  2|  set guid|  |
+|  3| log arrival|  |
+|  4|  |  Arrive|
+|  5|  |  clear guid|
+|  6|  |  log arrival|
+|  7| log SQL |  |
+|  8|  | log SQL  |
