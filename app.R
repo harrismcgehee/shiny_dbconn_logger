@@ -17,72 +17,21 @@ library(remotes) # for remotes::install_github
 if (!require("dbconn")) remotes::install_github("harrismcgehee/dbconn", dependencies = FALSE)
 
 
-# functions ---------------------------------------------------------------
-
-#' where
-#' http://adv-r.had.co.nz/Environments.html#env-recursion
-#' @param name x
-#' @param env environment
-#'
-#' @return environmnet
-#' @export
-#'
-where <- function(name, env = parent.frame()) {
-    if (identical(env, emptyenv())) {
-        # Base case
-        # stop("Can't find ", name, call. = FALSE)
-        emptyenv()
-        
-    } else if (exists(name, envir = env, inherits = FALSE)) {
-        # Success case
-        env
-        
-    } else {
-        # Recursive case
-        where(name, parent.env(env))
-    }
-}
-
-# add guid to the log layout if it is available
-layout_glue_my <- structure(function(level, msg, namespace = NA_character_,
-                                     .logcall = sys.call(), .topcall = sys.call(-1), .topenv = parent.frame()) {
-    
-    if (!inherits(level, 'loglevel')) {
-        stop('Invalid log level, see ?log_levels')
-    }
-    
-    with(logger::get_logger_meta_variables(log_level = level, namespace = namespace,
-                                           .logcall = .logcall, .topcall = .topcall, .topenv = .topenv),
-         {
-             
-             format = '{level} {msg}'
-             
-             # this is where we search through parent environments for the shiny app’s variables
-             guidenv <- try(where("guid", .topenv))
-             
-             # guid is reactive and needs to be evaluated
-             if (!identical(guidenv, emptyenv())) {
-                 format = paste(do.call(get("guid", envir = guidenv), args = list(), envir = guidenv), format)
-             }
-             
-             
-             glue::glue(format)
-         })
-}, generator = quote(layout_glue_my()))
-
 #  ----------------------------------------------------------------------
 
 set.seed(703)
 
-log_layout(layout_glue_my)
-log_info("app starting")
+default_log_format <- "{level} [{format(time, \"%Y-%d-%m %H:%M:%S\")}] {msg}"
 
+log_layout(layout_glue_generator(format = paste(default_log_format)))
+log_info("app starting")
 
 log_info("Connecting to DB")
 con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
 log_info("Connected to DB")
 
 onStop(function() {
+    log_layout(layout_glue_generator(format = paste(default_log_format)))
     log_info("Doing application cleanup\n")
     log_info('Closing connection to {Sys.getenv("db")}')
     dbDisconnect(con)
@@ -125,10 +74,12 @@ server <- function(input, output, session) {
             
     observe({
         if(is.null(guid())){
+            log_layout(layout_glue_generator(format = paste(guid(), default_log_format)))
             log_warn("No guid")
-        } else 
+        } else {
+            log_layout(layout_glue_generator(format = paste(guid(),default_log_format)))
             log_info("Server function / page loaded")
-        log_layout()
+        }
     })
 #  ---------------------------------------------
     
@@ -136,8 +87,9 @@ server <- function(input, output, session) {
     
     output$sql <- renderTable({
         req(guid())
-        query <- paste("SELECT 1 as one")
+        log_layout(layout_glue_generator(format = paste(guid(),default_log_format)))
         
+        query <- paste("SELECT 1 as one")
         ### > I would want this to log the GUID
         dbconn::log_query(con, query)
     })
